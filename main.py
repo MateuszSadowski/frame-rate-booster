@@ -13,9 +13,11 @@ if not cap.isOpened():
 
 if int(major_ver)  < 3 :
     fps = cap.get(cv.cv.CV_CAP_PROP_FPS)
+    length = int(cap.get(cv.cv.CV_CAP_PROP_FRAME_COUNT))
     print("Frames per second using video.get(cv2.cv.CV_CAP_PROP_FPS): {0}".format(fps))
 else :
     fps = cap.get(cv.CAP_PROP_FPS)
+    length = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
     print("Frames per second using video.get(cv2.CAP_PROP_FPS) : {0}".format(fps))
 
 ret1, frame1 = cap.read()
@@ -30,9 +32,11 @@ else:
 # or mp4v -> MPEG4
 # with .mov, .avi, .mp4 or .mkv
 fourcc = cv.VideoWriter_fourcc(*'avc1')
-writer = cv.VideoWriter('output.mp4', fourcc, 2 * fps, (frameSize[1], frameSize[0]))
+writer = cv.VideoWriter('output-upsampled.mp4', fourcc, 2 * fps, (frameSize[1], frameSize[0]))
 
+frameCounter = 1
 while(cap.isOpened()):
+    print('Processing frame {0}/{1}'.format(frameCounter, length), end='\r')
     ret3, frame3 = cap.read()
     if ret3:
         # Show next frame after specified interval or press q to exit
@@ -51,6 +55,8 @@ while(cap.isOpened()):
         writer.write(frame2)
 
         frame1 = frame3
+
+        frameCounter += 1
     else:
         # End of sequence
         writer.write(frame1)
