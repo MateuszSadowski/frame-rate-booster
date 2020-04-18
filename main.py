@@ -28,6 +28,7 @@ else:
 
 # use only avc1 -> h264
 # or mp4v -> MPEG4
+# with .mov, .avi, .mp4 or .mkv
 fourcc = cv.VideoWriter_fourcc(*'avc1')
 writer = cv.VideoWriter('output.mp4', fourcc, 2 * fps, (frameSize[1], frameSize[0]))
 
