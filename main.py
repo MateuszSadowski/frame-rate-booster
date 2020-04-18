@@ -18,25 +18,41 @@ else :
     fps = cap.get(cv.CAP_PROP_FPS)
     print("Frames per second using video.get(cv2.CAP_PROP_FPS) : {0}".format(fps))
 
-ret, frame = cap.read()
-size = frame.shape
+ret1, frame1 = cap.read()
+if ret1:
+    frameSize = frame1.shape
+else:
+    # End of sequence
+    print('Empty video file.')
+    sys.exit(2)
 
-writer = cv.VideoWriter('output.avi', cv.VideoWriter_fourcc('M','J','P','G'), 2 * fps, (size[1], size[0]))
+# use only avc1 -> h264
+# or mp4v -> MPEG4
+fourcc = cv.VideoWriter_fourcc(*'avc1')
+writer = cv.VideoWriter('output.mp4', fourcc, 2 * fps, (frameSize[1], frameSize[0]))
 
 while(cap.isOpened()):
-    ret, frame = cap.read()
-
-    if ret:
+    ret3, frame3 = cap.read()
+    if ret3:
         # Show next frame after specified interval or press q to exit
         # cv.imshow('Frame', frame)
         # if cv.waitKey(25) & 0xFF == ord('q'):
         #     break
 
+        # Add interpolated frame
+        frame2 = cv.addWeighted(frame1, 0.5, frame3, 0.5, 0.0)
+        # cv.imshow('Frame', frame3)
+        # if cv.waitKey(0) & 0xFF == ord('q'):
+        #     break
+
         # Write frames to new video file
-        writer.write(frame)
-        writer.write(np.zeros((size[0], size[1], 3), np.uint8))
+        writer.write(frame1)
+        writer.write(frame2)
+
+        frame1 = frame3
     else:
         # End of sequence
+        writer.write(frame1)
         break
 
 cap.release()
