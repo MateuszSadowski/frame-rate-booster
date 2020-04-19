@@ -1,26 +1,21 @@
 import cv2 as cv
 import numpy as np
 
-capRef = cv.VideoCapture('sample.mov')
-capTest = cv.VideoCapture('output-ref.mp4')
+import helper
 
-if not capRef.isOpened():
-    print('Error opening reference video file.')
-    sys.exit(2)
-elif not capTest.isOpened():
-    print('Error opening test video file.')
-    sys.exit(2)
+videoRef = helper.openVideo('sample.mov')
+videoTest = helper.openVideo('output-ref.mp4')
 
-frameCounter = 0
+frameCounter = 1
 psnrList = []
-while(capRef.isOpened() and capTest.isOpened()):
-    retRef, frameRef = capRef.read()
-    retTest, frameTest = capTest.read()
+while(videoRef.isOpened() and videoTest.isOpened()):
+    retRef, frameRef = videoRef.read()
+    retTest, frameTest = videoTest.read()
 
     if retRef and retTest:
         # TODO: implement own PSNR measurement function
         psnr = cv.PSNR(frameRef, frameTest)
-        print('Frame {0} PSNR: {1}'.format(frameCounter, psnr))
+        print('Frame {0} PSNR: {1}'.format(frameCounter, round(psnr, 2)))
         psnrList.append(psnr)
         frameCounter += 1
     else:
@@ -28,9 +23,9 @@ while(capRef.isOpened() and capTest.isOpened()):
         break
 
 # TODO: implement SSIM
-print('\nMean PSNR value: {0}'.format(np.mean(psnrList)))
+print('\nMean PSNR value: {0}'.format(round(np.mean(psnrList), 2)))
 
-capRef.release()
-capTest.release()
+videoRef.release()
+videoTest.release()
 
 cv.destroyAllWindows()
