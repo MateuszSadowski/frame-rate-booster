@@ -1,10 +1,11 @@
+import sys
 import cv2 as cv
 
 def openVideo(name):
     cap = cv.VideoCapture(name)
 
     if not cap.isOpened():
-        print('Error opening reference video file')
+        print('Error opening video file ' + name)
         sys.exit(2)
 
     return cap
