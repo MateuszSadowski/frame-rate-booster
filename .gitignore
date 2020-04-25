@@ -60,3 +60,4 @@ target/
 *.mov
 *.avi
 *.mp4
+*.yuv
