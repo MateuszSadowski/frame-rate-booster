@@ -1,8 +1,9 @@
 import sys
 import cv2 as cv
 import numpy as np
+import ffmpeg
 
-def openVideo(name):
+def openVideoOpenCV(name):
     cap = cv.VideoCapture(name)
 
     if not cap.isOpened():
@@ -10,6 +11,35 @@ def openVideo(name):
         sys.exit(2)
 
     return cap
+
+def getVideoReader(filename, width=-1, height=-1):
+    if width != -1 and height != -1:
+        videoReader = (
+            ffmpeg
+            .input(filename, s='{}x{}'.format(width, height))
+            .output('pipe:', format='rawvideo', pix_fmt='rgb24')
+            .run_async(pipe_stdout=True)
+        )
+    else:
+        videoReader = (
+            ffmpeg
+            .input(filename)
+            .output('pipe:', format='rawvideo', pix_fmt='rgb24')
+            .run_async(pipe_stdout=True)
+        )
+
+    return videoReader
+
+def getVideoWriter(filename, codec='rawvideo', pixFormat='yuv420p', width=3840, height=2160):
+    videoWriter = (
+        ffmpeg
+        .input('pipe:', format='rawvideo', pix_fmt='rgb24', s='{}x{}'.format(width, height))
+        .output(filename, format=codec, pix_fmt=pixFormat)
+        .overwrite_output()
+        .run_async(pipe_stdin=True)
+    )
+
+    return videoWriter
 
 def getVideoInfo(video):
     # Find OpenCV version
@@ -30,14 +60,32 @@ def getVideoInfo(video):
 
     return length, int(width), int(height), fps
 
-def readFrame(video):
-    ret, frame = video.read()
-    if ret:
-        return frame
+def readFrame(videoReader, width=3840, height=2160):
+    inBytes = videoReader.stdout.read(width * height * 3)
+    if not inBytes:
+        print('Error: could not read frame.')
+        return False, None
     else:
-        # End of sequence
-        print('End of video file')
-        sys.exit(0)
+        frame = (
+            np
+            .frombuffer(inBytes, np.uint8)
+            .reshape([height, width, 3])
+        )
+    
+    return True, frame
+
+def writeFrame(videoWriter, frame):
+    videoWriter.stdin.write(
+        frame
+        .astype(np.uint8)
+        .tobytes()
+    )
+
+def showFrame(frame, timeOut=0):
+    cv.imshow('Frame', frame)
+    if cv.waitKey(timeOut) & 0xFF == ord('q'):
+        return False    # user wants to quit
+    return True
 
 def drawFlow(img, flow, step=16):
     h, w = img.shape[:2]
