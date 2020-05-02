@@ -19,13 +19,13 @@ fourcc = cv.VideoWriter_fourcc(*'ffv1')
 writer = cv.VideoWriter('../output/room-no-occlusion-crop-farneback-2.mkv', fourcc, 2 * fps, (width, height))
 
 def testColorDiff(newVal, currVal, refVal):
-    newValLab = rgb2lab.rgb2lab(newVal)
-    currValLab = rgb2lab.rgb2lab(currVal)
-    refValLab = rgb2lab.rgb2lab(refVal)
+    # newValLab = rgb2lab.rgb2lab(newVal)
+    # currValLab = rgb2lab.rgb2lab(currVal)
+    # refValLab = rgb2lab.rgb2lab(refVal)
 
-    newValLab = LabColor(newValLab[0], newValLab[1], newValLab[2])
-    currValLab = LabColor(currValLab[0], currValLab[1], currValLab[2])
-    refValLab = LabColor(refValLab[0], refValLab[1], refValLab[2])
+    newValLab = LabColor(newVal[0], newVal[1], newVal[2])
+    currValLab = LabColor(currVal[0], currVal[1], currVal[2])
+    refValLab = LabColor(refVal[0], refVal[1], refVal[2])
 
     currDiff = delta_e_cie2000(currValLab, refValLab)
     newDiff = delta_e_cie2000(newValLab, refValLab)
@@ -58,15 +58,20 @@ while(video.isOpened()):
         # if cv.waitKey(25) & 0xFF == ord('q'):
         #     break
         flow = cv.calcOpticalFlowFarneback(prevgray, gray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
-        cv.imshow('flow', helper.drawFlow(gray, flow))
-        if cv.waitKey(0) & 0xFF == ord('q'):
-            break
+        # cv.imshow('flow', helper.drawFlow(gray, flow))
+        # if cv.waitKey(0) & 0xFF == ord('q'):
+        #     break
+
+        prevlab = cv.cvtColor(frame1, cv.COLOR_BGR2LAB)
+        lab = cv.cvtColor(frame3, cv.COLOR_BGR2LAB)
+
         warpedFlow = flow * 0.5
         newFrame = np.zeros((height, width, 3), np.uint8)
         for row in range(height):
             for col in range(width):
                 # print("{0}, {1}".format(row,col))
                 pixelVal = frame1[row, col]
+                pixelValLab = frame1[row, col]
                 (y, x) = (row, col) + warpedFlow[row, col]
                 x1 = min(int(round(x + 0.5)), width-1)
                 x2 = min(int(max(round(x - 0.5), 0)), width-1)
@@ -74,18 +79,20 @@ while(video.isOpened()):
                 y2 = min(int(max(round(y - 0.5), 0)), height-1)
                 y = min(int(round(y)), height-1)
                 x = min(int(round(x)), width-1)
-                newFrame[y, x] = testColorDiff(pixelVal, newFrame[y, x], frame3[y, x])
+                newFrame[y, x] = testColorDiff(pixelValLab, newFrame[y, x], lab[y, x])
                 if x1 < width:
-                    newFrame[y, x1] = testColorDiff(pixelVal, newFrame[y, x1], frame3[y, x1])
+                    newFrame[y, x1] = testColorDiff(pixelValLab, newFrame[y, x1], lab[y, x1])
+                    newFrame[y2, x1] = testColorDiff(pixelValLab, newFrame[y2, x1], lab[y2, x1])
                     if y1 < height:
-                        newFrame[y1, x1] = testColorDiff(pixelVal, newFrame[y1, x1], frame3[y1, x1])
-                newFrame[y, x2] = testColorDiff(pixelVal, newFrame[y, x2], frame3[y, x2])
+                        newFrame[y1, x1] = testColorDiff(pixelValLab, newFrame[y1, x1], lab[y1, x1])
+                newFrame[y, x2] = testColorDiff(pixelValLab, newFrame[y, x2], lab[y, x2])
                 if y1 < height:
-                    newFrame[y1, x] = testColorDiff(pixelVal, newFrame[y1, x], frame3[y1, x])
-                    if x1 < width:
-                        newFrame[y1, x1] = testColorDiff(pixelVal, newFrame[y1, x1], frame3[y1, x1])
-                newFrame[y2, x] = testColorDiff(pixelVal, newFrame[y2, x], frame3[y2, x])
+                    newFrame[y1, x] = testColorDiff(pixelValLab, newFrame[y1, x], lab[y1, x])
+                    newFrame[y1, x2] = testColorDiff(pixelValLab, newFrame[y1, x2], lab[y1, x2])
+                newFrame[y2, x] = testColorDiff(pixelValLab, newFrame[y2, x], lab[y2, x])
+                newFrame[y2, x2] = testColorDiff(pixelValLab, newFrame[y2, x2], lab[y2, x2])
 
+        newFrame = cv.cvtColor(newFrame, cv.COLOR_LAB2RGB)
 
         # Show next frame after specified interval or press q to exit
         cv.imshow('Frame', newFrame)
