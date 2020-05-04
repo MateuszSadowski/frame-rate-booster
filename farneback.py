@@ -3,7 +3,7 @@ import cv2 as cv
 import numpy as np
 from colormath.color_objects import LabColor, sRGBColor
 from colormath.color_conversions import convert_color
-from colormath.color_diff import delta_e_cie2000
+from colormath.color_diff import delta_e_cie2000, delta_e_cie1976
 
 import helper
 import rgb2lab
@@ -16,7 +16,7 @@ length, width, height, fps = helper.getVideoInfo(video)
 # or mp4v -> MPEG4
 # with .mov, .avi, .mp4 or .mkv
 fourcc = cv.VideoWriter_fourcc(*'ffv1')
-writer = cv.VideoWriter('../output/room-no-occlusion-crop-farneback-2.mkv', fourcc, 2 * fps, (width, height))
+writer = cv.VideoWriter('../output/room-no-occlusion-crop-farneback-3.mkv', fourcc, 2 * fps, (width, height))
 
 def testColorDiff(newVal, currVal, refVal):
     # newValLab = rgb2lab.rgb2lab(newVal)
@@ -27,8 +27,8 @@ def testColorDiff(newVal, currVal, refVal):
     currValLab = LabColor(currVal[0], currVal[1], currVal[2])
     refValLab = LabColor(refVal[0], refVal[1], refVal[2])
 
-    currDiff = delta_e_cie2000(currValLab, refValLab)
-    newDiff = delta_e_cie2000(newValLab, refValLab)
+    currDiff = delta_e_cie1976(currValLab, refValLab)
+    newDiff = delta_e_cie1976(newValLab, refValLab)
 
     if newDiff < currDiff:
         return newVal
@@ -95,9 +95,9 @@ while(video.isOpened()):
         newFrame = cv.cvtColor(newFrame, cv.COLOR_LAB2RGB)
 
         # Show next frame after specified interval or press q to exit
-        cv.imshow('Frame', newFrame)
-        if cv.waitKey(0) & 0xFF == ord('q'):
-            break
+        # cv.imshow('Frame', newFrame)
+        # if cv.waitKey(0) & 0xFF == ord('q'):
+        #     break
 
         # Write frames to new video file
         writer.write(frame1)
