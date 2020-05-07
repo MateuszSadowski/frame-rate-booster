@@ -29,8 +29,6 @@ while(video.isOpened()):
     print('Processing frame {0}/{1}'.format(frameCounter, length), end='\r')
     ret3, frame3 = video.read()
     if ret3:
-        # Add interpolated frame
-        # frame2 = cv.addWeighted(frame1, 0.5, frame3, 0.5, 0.0)
         prevgray = cv.cvtColor(frame1, cv.COLOR_BGR2GRAY)
         gray = cv.cvtColor(frame3, cv.COLOR_BGR2GRAY)
 
@@ -39,6 +37,7 @@ while(video.isOpened()):
         #     break
 
         warpedFlow = flow * 0.5
+        # TODO: use NaNs or something else instead of 0s to indicate no information
         # newFrame = np.full((height, width, 3), np.nan)
         newFrame = np.zeros((height, width, 3), np.uint8)
         for row in range(height):
@@ -48,6 +47,7 @@ while(video.isOpened()):
                 x = min(int(round(x)), width-1)
                 newFrame[y, x] = frame3[row, col]
 
+        # TODO: add blend forward and backward flow, blend only if color difference is not too big
         # backFlow = cv.calcOpticalFlowFarneback(gray, prevgray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
         # warpedBackFlow = backFlow * 0.5
         # for row in range(height):
@@ -60,6 +60,7 @@ while(video.isOpened()):
         #         else:
         #             newFrame[y, x] = frame1[row, col]
 
+        # TODO: iterate only through hole pixel indices
         # holeInd = np.where(not newFrame.all())
         # for (row, col, channel) in holeInd:
         for row in range(height):
@@ -77,7 +78,7 @@ while(video.isOpened()):
                 val = np.mean(points, axis=0)
                 newFrame[row, col] = val
                     
-        # Show next frame after specified interval or press q to exit
+        # Show interpolated frame
         # if not helper.showImage(newFrame):
         #     break
 
