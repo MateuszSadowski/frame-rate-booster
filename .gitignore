@@ -60,3 +60,7 @@ target/
 *.mov
 *.avi
 *.mp4
+*.mkv
+
+# Logs
+*.txt
