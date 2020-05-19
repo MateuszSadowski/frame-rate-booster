@@ -4,15 +4,15 @@ import numpy as np
 
 import helper
 
-video = helper.openVideo('sample.mov')
+video = helper.openVideo('../downsampled/room-no-occlusion-crop-downsampled.mkv')
 
 length, width, height, fps = helper.getVideoInfo(video)
 
 # use only avc1 -> H264
 # or mp4v -> MPEG4
 # with .mov, .avi, .mp4 or .mkv
-fourcc = cv.VideoWriter_fourcc(*'avc1')
-writer = cv.VideoWriter('output.mp4', fourcc, 2 * fps, (width, height))
+fourcc = cv.VideoWriter_fourcc(*'ffv1')
+writer = cv.VideoWriter('../output/room-no-occlusion-crop-blend.mkv', fourcc, 2 * fps, (width, height))
 
 ret1, frame1 = video.read()
 if not ret1:
@@ -25,20 +25,16 @@ while(video.isOpened()):
     print('Processing frame {0}/{1}'.format(frameCounter, length), end='\r')
     ret3, frame3 = video.read()
     if ret3:
-        # Show next frame after specified interval or press q to exit
-        # cv.imshow('Frame', frame)
-        # if cv.waitKey(25) & 0xFF == ord('q'):
-        #     break
-
         # Add interpolated frame
-        frame2 = cv.addWeighted(frame1, 0.5, frame3, 0.5, 0.0)
-        # cv.imshow('Frame', frame3)
-        # if cv.waitKey(0) & 0xFF == ord('q'):
-        #     break
+        newFrame = cv.addWeighted(frame1, 0.5, frame3, 0.5, 0.0)
+                    
+        # Show interpolated frame
+        if not helper.showImage(newFrame):
+            break
 
         # Write frames to new video file
         writer.write(frame1)
-        writer.write(frame2)
+        writer.write(newFrame)
 
         frame1 = frame3
 
