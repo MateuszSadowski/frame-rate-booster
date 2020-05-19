@@ -50,3 +50,9 @@ def drawFlow(img, flow, step=16):
     for (x1, y1), (_x2, _y2) in lines:
         cv.circle(vis, (x1, y1), 1, (0, 255, 0), -1)
     return vis
+
+def showImage(img, timeout=0, label="Frame"):
+    cv.imshow('Frame', img)
+    if cv.waitKey(timeout) & 0xFF == ord('q'):
+        return False
+    return True

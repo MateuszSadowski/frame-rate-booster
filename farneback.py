@@ -6,9 +6,13 @@ from colormath.color_conversions import convert_color
 from colormath.color_diff import delta_e_cie2000, delta_e_cie1976
 
 import helper
-import rgb2lab
+import psnr
 
-video = helper.openVideo('../downsampled/hand-occlusion-crop-downsampled.mkv')
+inputVideoName = '../test-videos/sample-cut-crop-short.mov'
+outputVideoName = '../output/sample-cut-crop-short-farneback-0.5-3-30-3-5-1.2-0.mkv'
+refVideoName = '../test-videos/room-no-occlusion-crop.mov'
+
+video = helper.openVideo(inputVideoName)
 
 length, width, height, fps = helper.getVideoInfo(video)
 
@@ -16,7 +20,7 @@ length, width, height, fps = helper.getVideoInfo(video)
 # or mp4v -> MPEG4
 # with .mov, .avi, .mp4 or .mkv
 fourcc = cv.VideoWriter_fourcc(*'ffv1')
-writer = cv.VideoWriter('../output/hand-occlusion-crop-farneback-2.mkv', fourcc, 2 * fps, (width, height))
+writer = cv.VideoWriter(outputVideoName, fourcc, 2 * fps, (width, height))
 
 ret1, frame1 = video.read()
 if not ret1:
@@ -37,6 +41,7 @@ while(video.isOpened()):
         #     break
 
         warpedFlow = flow * 0.5
+
         # TODO: use NaNs or something else instead of 0s to indicate no information
         # newFrame = np.full((height, width, 3), np.nan)
         newFrame = np.zeros((height, width, 3), np.uint8)
@@ -47,22 +52,22 @@ while(video.isOpened()):
                 x = min(int(round(x)), width-1)
                 newFrame[y, x] = frame3[row, col]
 
-        # TODO: add blend forward and backward flow, blend only if color difference is not too big
-        # backFlow = cv.calcOpticalFlowFarneback(gray, prevgray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
-        # warpedBackFlow = backFlow * 0.5
-        # for row in range(height):
-        #     for col in range(width):
-        #         (y, x) = (row, col) + warpedBackFlow[row, col]
-        #         y = min(int(round(y)), height-1)
-        #         x = min(int(round(x)), width-1)
-        #         if newFrame[y, x].all():
-        #             newFrame[y, x] = np.mean([frame1[row, col], newFrame[y, x]], axis=0)
-        #         else:
-        #             newFrame[y, x] = frame1[row, col]
+        # # TODO: add blend forward and backward flow, blend only if color difference is not too big
+        # # backFlow = cv.calcOpticalFlowFarneback(gray, prevgray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+        # # warpedBackFlow = backFlow * 0.5
+        # # for row in range(height):
+        # #     for col in range(width):
+        # #         (y, x) = (row, col) + warpedBackFlow[row, col]
+        # #         y = min(int(round(y)), height-1)
+        # #         x = min(int(round(x)), width-1)
+        # #         if newFrame[y, x].all():
+        # #             newFrame[y, x] = np.mean([frame1[row, col], newFrame[y, x]], axis=0)
+        # #         else:
+        # #             newFrame[y, x] = frame1[row, col]
 
-        # TODO: iterate only through hole pixel indices
-        # holeInd = np.where(not newFrame.all())
-        # for (row, col, channel) in holeInd:
+        # # TODO: iterate only through hole pixel indices
+        # # holeInd = np.where(not newFrame.all())
+        # # for (row, col, channel) in holeInd:
         for row in range(height):
             for col in range(width):
             # Perform bilinear interpolation, change NaNs to 0s
@@ -95,6 +100,8 @@ while(video.isOpened()):
         break
 
 print('\nSuccess')
+
+psnr.calcPSNR(outputVideoName, refVideoName)
 
 video.release()
 writer.release()
