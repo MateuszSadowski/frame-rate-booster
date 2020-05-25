@@ -8,8 +8,8 @@ from colormath.color_diff import delta_e_cie2000, delta_e_cie1976
 import helper
 import psnr
 
-inputVideoName = '../test-videos/sample-cut-crop-short.mov'
-outputVideoName = '../output/sample-cut-crop-short-farneback-0.5-3-30-3-5-1.2-0.mkv'
+inputVideoName = '../downsampled/room-no-occlusion-crop-downsampled.mkv'
+outputVideoName = '../output/room-farneback-0.5-3-30-3-5-1.2-0-remap-bilinear-reflect.mkv'
 refVideoName = '../test-videos/room-no-occlusion-crop.mov'
 
 video = helper.openVideo(inputVideoName)
@@ -36,7 +36,7 @@ while(video.isOpened()):
         prevgray = cv.cvtColor(frame1, cv.COLOR_BGR2GRAY)
         gray = cv.cvtColor(frame3, cv.COLOR_BGR2GRAY)
 
-        flow = cv.calcOpticalFlowFarneback(prevgray, gray, None, 0.5, 3, 50, 3, 5, 1.2, 0)
+        flow = cv.calcOpticalFlowFarneback(prevgray, gray, None, 0.5, 3, 30, 3, 10, 1.2, 0)
         # if not helper.showImage(helper.drawFlow(gray, flow)):
         #     break
 
@@ -45,12 +45,24 @@ while(video.isOpened()):
         # TODO: use NaNs or something else instead of 0s to indicate no information
         # newFrame = np.full((height, width, 3), np.nan)
         newFrame = np.zeros((height, width, 3), np.uint8)
+        warpMapX = np.zeros((height, width), np.float32)
+        warpMapX[:] = range(width)
+        warpMapY = np.zeros((height, width), np.float32)
+        warpMapY.T[:] = range(height)
         for row in range(height):
             for col in range(width):
-                (y, x) = (row, col) + warpedFlow[row, col]
-                y = min(int(round(y)), height-1)
-                x = min(int(round(x)), width-1)
-                newFrame[y, x] = frame3[row, col]
+                warpMapX[row, col] += warpedFlow[row, col][0]
+                warpMapY[row, col] += warpedFlow[row, col][1]
+                # (y, x) = (row, col) + warpedFlow[row, col]
+                # y = min(int(round(y)), height-1)
+                # x = min(int(round(x)), width-1)
+                # newFrame[y, x] = frame3[row, col]
+
+        newFrame = cv.remap(frame3, warpMapX, warpMapY, cv.INTER_LINEAR, borderMode=cv.BORDER_REFLECT)
+        
+        # Show interpolated frame
+        # if not helper.showImage(newFrame):
+        #     break
 
         # # TODO: add blend forward and backward flow, blend only if color difference is not too big
         # # backFlow = cv.calcOpticalFlowFarneback(gray, prevgray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
@@ -68,20 +80,20 @@ while(video.isOpened()):
         # # TODO: iterate only through hole pixel indices
         # # holeInd = np.where(not newFrame.all())
         # # for (row, col, channel) in holeInd:
-        for row in range(height):
-            for col in range(width):
-            # Perform bilinear interpolation, change NaNs to 0s
-                # if not np.isnan(newFrame[row,col]).all():
-                if newFrame[row,col].all():
-                    continue
+        # for row in range(height):
+        #     for col in range(width):
+        #     # Perform bilinear interpolation, change NaNs to 0s
+        #         # if not np.isnan(newFrame[row,col]).all():
+        #         if newFrame[row,col].all():
+        #             continue
 
-                d = 1
-                points = newFrame[max(row-d,0):min(row+d+1,height-1), max(col-d,0):min(col+d+1,width)]
-                points = points.reshape(points.shape[0] * points.shape[1], 3)
-                points = points[np.all(points != 0, axis=1)]
+        #         d = 1
+        #         points = newFrame[max(row-d,0):min(row+d+1,height-1), max(col-d,0):min(col+d+1,width)]
+        #         points = points.reshape(points.shape[0] * points.shape[1], 3)
+        #         points = points[np.all(points != 0, axis=1)]
 
-                val = np.mean(points, axis=0)
-                newFrame[row, col] = val
+        #         val = np.mean(points, axis=0)
+        #         newFrame[row, col] = val
                     
         # Show interpolated frame
         # if not helper.showImage(newFrame):
