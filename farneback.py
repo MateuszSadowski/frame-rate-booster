@@ -8,9 +8,9 @@ from colormath.color_diff import delta_e_cie2000, delta_e_cie1976
 import helper
 import psnr
 
-inputVideoName = '../downsampled/room-no-occlusion-crop-downsampled.mkv'
-outputVideoName = '../output/room-farneback-0.5-3-30-3-5-1.2-0-remap-bilinear-reflect.mkv'
-refVideoName = '../test-videos/room-no-occlusion-crop.mov'
+inputVideoName = '../downsampled/ball-cut-upsampled.mkv'
+outputVideoName = '../output/ball-cut-upsampled-2.mkv'
+refVideoName = '../test-videos/ball-cut.mov'
 
 video = helper.openVideo(inputVideoName)
 
@@ -36,11 +36,14 @@ while(video.isOpened()):
         prevgray = cv.cvtColor(frame1, cv.COLOR_BGR2GRAY)
         gray = cv.cvtColor(frame3, cv.COLOR_BGR2GRAY)
 
-        flow = cv.calcOpticalFlowFarneback(prevgray, gray, None, 0.5, 3, 30, 3, 10, 1.2, 0)
+        flow = cv.calcOpticalFlowFarneback(prevgray, gray, None, 0.5, 3, 30, 3, 5, 1.2, 0)
+        backFlow = cv.calcOpticalFlowFarneback(gray, prevgray, None, 0.5, 3, 30, 3, 5, 1.2, 0)
+
         # if not helper.showImage(helper.drawFlow(gray, flow)):
         #     break
 
         warpedFlow = flow * 0.5
+        backWarpedFlow = backFlow * 0.5
 
         # TODO: use NaNs or something else instead of 0s to indicate no information
         # newFrame = np.full((height, width, 3), np.nan)
@@ -49,16 +52,25 @@ while(video.isOpened()):
         warpMapX[:] = range(width)
         warpMapY = np.zeros((height, width), np.float32)
         warpMapY.T[:] = range(height)
+        backWarpMapX = np.zeros((height, width), np.float32)
+        backWarpMapX[:] = range(width)
+        backWarpMapY = np.zeros((height, width), np.float32)
+        backWarpMapY.T[:] = range(height)
         for row in range(height):
             for col in range(width):
                 warpMapX[row, col] += warpedFlow[row, col][0]
                 warpMapY[row, col] += warpedFlow[row, col][1]
+                backWarpMapX[row, col] += backWarpedFlow[row, col][0]
+                backWarpMapY[row, col] += backWarpedFlow[row, col][1]
                 # (y, x) = (row, col) + warpedFlow[row, col]
                 # y = min(int(round(y)), height-1)
                 # x = min(int(round(x)), width-1)
                 # newFrame[y, x] = frame3[row, col]
 
         newFrame = cv.remap(frame3, warpMapX, warpMapY, cv.INTER_LINEAR, borderMode=cv.BORDER_REFLECT)
+        backNewFrame = cv.remap(frame1, backWarpMapX, backWarpMapY, cv.INTER_LINEAR, borderMode=cv.BORDER_REFLECT)
+
+        newFrame = cv.addWeighted(newFrame, 0.5, backNewFrame, 0.5, 0.0)
         
         # Show interpolated frame
         # if not helper.showImage(newFrame):
