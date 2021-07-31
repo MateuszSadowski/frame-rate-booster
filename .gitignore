@@ -64,3 +64,6 @@ target/
 
 # Logs
 *.txt
+
+# Mac
+.DS_Store
