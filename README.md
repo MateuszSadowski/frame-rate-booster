@@ -1,6 +1,6 @@
 # Frame Rate Booster
 
-This is a tool for motion-compensated temporal upsampling of frame sequances in the form of videos. Frame interpolation is carried out with the use of optical flow. To obtain the optical flow for two consecutive frames, the [Farneback](http://www.diva-portal.org/smash/get/diva2:273847/FULLTEXT01.pdf) method is used.
+This is a tool for motion-compensated temporal upsampling of frame sequances in the form of videos. Frame interpolation is carried out with the use of optical flow. To obtain the optical flow for two consecutive frames, the [Farneback](http://www.diva-portal.org/smash/get/diva2:273847/FULLTEXT01.pdf) method is used. An in-depth description of the project, methods and results can be found [here](https://www.student.dtu.dk/~s192771/DigitalVideoTechnology.pdf).
 
 ## Description
 
